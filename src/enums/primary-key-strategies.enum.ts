@@ -1,4 +1,4 @@
-import { UniqueKey } from "../types/unique-key.type";
+import { BidbUniqueKey } from "../types/bidb.types";
 
 type PropertyOf<T> = keyof T;
 type ValidPropertyOf<T, K extends PropertyOf<T>> = T[K] extends Function ? null: K
@@ -18,21 +18,24 @@ export class PrimaryKeyStrategy {
         if(typeof keyName !== 'string') {
             throw new Error(`${keyName?.toString()} is not a valid property`);
         }
-        return new PrimaryKeyStrategy(keyName);
+        return new PrimaryKeyStrategy(keyName, false);
     }
 
     private constructor(
-        private _keyName: UniqueKey,
-        private _autoIncrement: boolean = false
+        private _keyName: BidbUniqueKey,
+        private _autoIncrement: boolean
     ) {
 
     }
-    get keyName(): UniqueKey {
+    get keyName(): BidbUniqueKey {
         return this._keyName;
     }
-    toObjectLiteral(): { autoIncrement: boolean, key: UniqueKey } {
+    get autoIncremented(): boolean {
+        return this._autoIncrement;
+    }
+    toObjectLiteral(): { autoIncrement?: boolean, keyPath?: BidbUniqueKey } {
         return {
-            key: this._keyName,
+            keyPath: this._keyName,
             autoIncrement: this._autoIncrement
         }
     }

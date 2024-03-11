@@ -1,23 +1,17 @@
-import { PrimaryKeyStrategy } from "../enums/primary-key-strategies.enum";
-import { Database } from "../types/database.type";
-import { DBIndex } from "../types/db-index.type";
+import { BidbDBIndex, BidbDatabase, BidbObjectCollection, BidbValidKey } from "../types/bidb.types";
 
-export abstract class BaseRepository<T> {
-    private objectCollection?: IDBObjectStore;
+export abstract class BidbRepository<T> {
+    private objectCollection?: BidbObjectCollection;
     constructor(
-        private readonly dataBase: Database,
-        private readonly collectionName: string,
-        strategy: PrimaryKeyStrategy
+        private readonly dataBase: BidbDatabase,
+        private readonly collectionName: string
     ) {
-      const collectionAlreadyExists = this.dataBase.objectStoreNames
+      const collectionAlreadyExists: boolean = this.dataBase.objectStoreNames
         .contains(collectionName);
-      if(collectionAlreadyExists) {
-        return;
+      if(!collectionAlreadyExists) {
+        throw new Error(`Collection with name ${collectionName} does not exists
+         in database with name ${dataBase.name}`);
       }
-      this.objectCollection = this.dataBase.createObjectStore(
-        collectionName,
-        strategy.toObjectLiteral()
-      );
     }
     protected createTransaction(mode: IDBTransactionMode): IDBTransaction {
        return this.dataBase.transaction([this.collectionName], mode);
@@ -25,7 +19,7 @@ export abstract class BaseRepository<T> {
     protected createIndex<K extends keyof T = keyof T>(
         indexName: K,
         options?: { multiEntry?: boolean, unique?: boolean }
-    ): DBIndex {
+    ): BidbDBIndex {
         if(typeof indexName !== "string") {
             throw new Error("indexName must be string");
         }
@@ -123,9 +117,9 @@ export abstract class BaseRepository<T> {
         });
     }
     protected async getByUniqueKey(
-        key: string,
+        key: BidbValidKey,
         currentTransaction?: IDBTransaction
-    ): Promise<T> {
+    ): Promise<T | undefined> {
         const transaction: IDBTransaction = 
             currentTransaction ?? this.dataBase.transaction([this.collectionName], "readonly");
         this.objectCollection = transaction.objectStore(this.collectionName);
