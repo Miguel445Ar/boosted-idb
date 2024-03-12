@@ -91,8 +91,6 @@ export abstract class BidbRepository<T> {
             return collection.filter(criteria);
         }catch(e: Error | any) {
             throw new Error(e);
-        } finally {
-            transaction.commit();
         }
     }
     protected async getByIndex(
